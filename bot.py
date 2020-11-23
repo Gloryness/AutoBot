@@ -1,5 +1,6 @@
 import os
 import discord
+import traceback
 from discord.ext import commands
 
 tokenfile = open('token.txt')
@@ -40,25 +41,28 @@ async def _help(ctx):
 
     await ctx.send(embed=embed)
 
+def is_a_developer(ctx):
+    return ctx.author.id in [350963503424733184]
+
 @client.group()
 async def extension(ctx: commands.Context):
     if ctx.invoked_subcommand is None:
         await ctx.send('Invalid extension command passed. **Use `>help` for help.**')
 
 @extension.command()
-@commands.has_role(item='Bot Developer')
+@commands.check(is_a_developer)
 async def load(ctx, extension):
     client.load_extension(f'cogs.{extension}')
     await ctx.send(f'**{extension}** was successfully loaded. :white_check_mark:')
 
 @extension.command()
-@commands.has_role(item='Bot Developer')
+@commands.check(is_a_developer)
 async def unload(ctx, extension):
     client.unload_extension(f'cogs.{extension}')
     await ctx.send(f'**{extension}** was successfully unloaded. :white_check_mark:')
 
 @extension.command()
-@commands.has_role(item='Bot Developer')
+@commands.check(is_a_developer)
 async def reload(ctx, extension):
     client.unload_extension(f'cogs.{extension}')
     client.load_extension(f'cogs.{extension}')
@@ -68,12 +72,14 @@ async def reload(ctx, extension):
 @unload.error
 @reload.error
 async def extension_error(ctx, error):
-    if 'ExtensionAlreadyLoaded' in str(error):
-        await ctx.send('Extension has already been loaded! :angry:')
-    elif 'ExtensionNotLoaded' in str(error):
-        await ctx.send('Extension has not been loaded yet! :angry:')
-    elif 'ExtensionNotFound' in str(error):
-        await ctx.send('Extension not found.')
+    if 'ExtensionAlreadyLoaded' in traceback.format_exc():
+        await ctx.send(':x: Extension has already been loaded! :angry:')
+    elif 'ExtensionNotLoaded' in traceback.format_exc():
+        await ctx.send(':x: Extension has not been loaded yet! :angry:')
+    elif 'ExtensionNotFound' in traceback.format_exc():
+        await ctx.send(':x: Extension not found.')
+    elif 'CheckFailure' in traceback.format_exc():
+        await ctx.send(':x: Insufficient permissions.')
     else:
         await ctx.send(f':x: **An error has occured.**\nError: `{error}`')
 

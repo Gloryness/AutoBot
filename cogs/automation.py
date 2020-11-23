@@ -122,6 +122,9 @@ class Automation(commands.Cog):
                         for vc in voice_channels:
                             if vc.name == voice:
                                 done = True
+                                invite = await vc.create_invite(unique=False, reason='Automated by using >start')
+                                msg = msg.replace(vc.name, f"[{vc.name}]({invite})")
+                                break
                         if not done:
                             await channel.send(":x: Invalid voice channel name.")
                             return

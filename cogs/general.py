@@ -3,7 +3,6 @@ from discord.ext import commands
 from utils import embeds
 
 class General(commands.Cog):
-
     def __init__(self, client):
         self.client = client
 
