@@ -4,5 +4,5 @@ A discord bot used for automating quick tasks such as muting/unmuting/moving eve
 [Invite the bot to your server here](https://discord.com/oauth2/authorize?client_id=779723572968816663&permissions=8&scope=bot)
 
 
-**Command Prefix: `>`**
-**Help Command: `>help` `>h`**
+- **Command Prefix: `>`**
+- **Help Command: `>help` `>h`**
