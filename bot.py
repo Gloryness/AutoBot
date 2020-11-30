@@ -2,18 +2,46 @@ import os
 import discord
 import traceback
 from discord.ext import commands
+from utils.cache import Cache
+
+def get_prefix(client, message):
+    cache = Cache('prefixes.json')
+    data = cache.all()
+    return data[str(message.guild.id)]
 
 tokenfile = open('token.txt')
 token = tokenfile.read().strip()
 tokenfile.close()
 
 intents = discord.Intents()
-client = commands.Bot(command_prefix='>', intents=intents.all(), help_command=None)
+client = commands.Bot(command_prefix=get_prefix, intents=intents.all(), help_command=None)
 
 @client.event
 async def on_ready():
     await client.change_presence(status=discord.Status.online, activity=discord.Activity(name="everything", type=discord.ActivityType.watching))
     print('Bot is online.')
+    print('The servers that I\'m in are:')
+    for guild in client.guilds:
+        print(f"- {guild.name} ({guild.id}) ----- Owned by {guild.owner.display_name} with {guild.member_count} members -- "
+              f"{', '.join(map(lambda k: k.display_name, guild.members))}")
+
+@client.event
+async def on_guild_join(guild):
+    cache = Cache('prefixes.json')
+    data = cache.all()
+
+    data[str(guild.id)] = '>'
+
+    cache.store(data)
+
+@client.event
+async def on_guild_remove(guild):
+    cache = Cache('prefixes.json')
+    data = cache.all()
+
+    data.pop(str(guild.id))
+
+    cache.store(data)
 
 @client.command(aliases=['help', 'h'], pass_context=True)
 async def _help(ctx):
@@ -21,19 +49,23 @@ async def _help(ctx):
                    "`>unshush` - Unmutes and undeafens everyone in the current VC.\n" \
                    "`>mute` - Mutes everyone in the current VC.\n" \
                    "`>deafen` - Deafens everyone in the current VC.\n" \
-                   "`>move channel_name` - Move everyone in the current VC to another VC."
+                   "`>move {voice_channel_name}` - Move everyone in the current VC to another VC."
     automation_message = "`>setup {subject}` - Make an announcement about something that's happening (e.g events, movies, games)\n" \
                          "`>start` - Make everyone that reacted to the announcement to join the given Voice Channel (must be in waiting-room)."
-    external_message = "If you want to check out the source code so you can see how the " \
-                       "bot works, check out the github [here](https://github.com/Goryness/AutoBot)."
+    moderator_message = '`>history {user} {channel} {limit}` - Shows the message history of a user. (max limit: 50)\n' \
+                        '`>changeprefix {prefix}` - Changes the bots prefix.'
     developer_message = "`>extension load {extension_name}` - Loads up an extension.\n" \
                         "`>extension unload {extension_name}` - Unloads an extension.\n" \
                         "`>extension reload {extension_name}` - Reloads an extension."
+    external_message = "If you want to check out the source code so you can see how the " \
+                       "bot works, check out the github [here](https://github.com/Goryness/AutoBot)."
+
     author = ctx.message.author
-    embed = discord.Embed(title="Help", description="**Command Prefix: `>`**", colour=0xFB94F0)
+    embed = discord.Embed(title="Help", description=f"**Command Prefix: `{get_prefix(client, ctx)}`**", colour=0xFB94F0)
     embed.set_thumbnail(url=author.avatar_url)
     embed.add_field(name="-- General --", value=general_message, inline=False)
     embed.add_field(name="\n-- Automation --", value=automation_message, inline=False)
+    embed.add_field(name="\n-- Moderator --", value=moderator_message, inline=False)
     embed.add_field(name="\n-- Developer --", value=developer_message, inline=False)
     embed.add_field(name="\n-- External --", value=external_message, inline=False)
     embed.set_footer(text="AutoBot programmed by Gloryness",
@@ -44,8 +76,8 @@ async def _help(ctx):
 def is_a_developer(ctx):
     return ctx.author.id in [350963503424733184]
 
-@client.group()
-async def extension(ctx: commands.Context):
+@client.group(aliases=['ext'])
+async def extension(ctx):
     if ctx.invoked_subcommand is None:
         await ctx.send('Invalid extension command passed. **Use `>help` for help.**')
 

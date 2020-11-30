@@ -1,6 +1,5 @@
 import discord
 from itertools import cycle
-from discord.ext import commands
 
 class Embeds:
     circles = cycle({
@@ -40,15 +39,21 @@ class Embeds:
             return emoji[0:index]
         return emoji
 
-    async def generate_embed(self, ctx, author, members, method='handled', title="--", emoji="white_check_mark"):
-        embed = discord.Embed(title=title,
-                              description=f":{emoji}: **{'Uns' if emoji != 'white_check_mark' else 'S'}uccessfully** {method} the following users:",
-                              colour=0x38FD41)
+    async def generate_embed(self, ctx, author, members,
+                             description='An empty description..',
+                             title="--",
+                             error_reason="The host is not connected to a voice channel."
+                             ):
+        """
+        Generate a embed to send to discord.
+        """
+        embed = discord.Embed(title=title, description=description, colour=0x38FD41)
         embed.set_thumbnail(url=author.avatar_url)
         if len(members) == 0:
-            embed.add_field(name="Error", value="The host is not connected to a voice channel.")
+            embed.add_field(name="Error", value=error_reason)
             embed.set_footer(text="AutoBot programmed by Gloryness",
-                             icon_url="https://cdn.discordapp.com/avatars/350963503424733184/46af48be5dcc80d08fd1fbcffc4cfe0a.png?size=128")
+                        icon_url="https://cdn.discordapp.com/avatars/350963503424733184/46af48be5dcc80d08fd1fbcffc4cfe0a.png?size=128")
+            embed.description = embed.description.replace('Successfully', 'Unsuccessfully').replace('white_check_mark', 'x')
             return embed
         _sep = len(members) // 3
         if _sep == 0:
